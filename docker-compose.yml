@@ -1,0 +1,52 @@
+services:
+  excalibur:
+    container_name: excalibur
+    image: excalibur:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      # Mount workspace for file operations
+      - ./workspace:/workspace
+      # Persist Claude Code configuration across container restarts
+      - claude-config:/home/pentester/.claude
+      # Persist CCR configuration
+      - ccr-config:/home/pentester/.claude-code-router
+    stdin_open: true
+    tty: true
+    # Required for OpenVPN (HackTheBox/TryHackMe connectivity)
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    # Use host network for easy access to benchmark containers
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Resource allocation - adjust based on your system
+    # More CPUs and memory improve performance for complex tasks
+    deploy:
+      resources:
+        limits:
+          cpus: '4'        # Max 4 CPU cores (adjust higher if available)
+          memory: 8G       # Max 8GB RAM
+        reservations:
+          cpus: '2'        # Guarantee 2 CPU cores
+          memory: 4G       # Guarantee 4GB RAM
+    environment:
+      # Terminal settings for proper TUI rendering
+      - TERM=xterm-256color
+      # Python settings
+      - PYTHONUNBUFFERED=1
+      # Auth mode: "openrouter", "anthropic", or "manual"
+      - EXCALIBUR_AUTH_MODE=${EXCALIBUR_AUTH_MODE:-manual}
+      # API keys (set based on auth mode via .env.auth)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      # Default OpenRouter model (e.g., deepseek/deepseek-chat, deepseek/deepseek-r1)
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openai/gpt-5.1}
+
+volumes:
+  # Named volume for Claude Code config persistence
+  claude-config:
+  # Named volume for CCR config persistence
+  ccr-config:
