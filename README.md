@@ -28,12 +28,13 @@ A standard Google Cloud project API key is not accepted by standard Vertex AI.
 Standard Vertex AI uses Application Default Credentials:
 
 ```bash
-gcloud auth application-default login
-export LLM_PROVIDER=gemini
-export GEMINI_API_MODE=vertex
-export GOOGLE_CLOUD_PROJECT=your-project-id
-export GOOGLE_CLOUD_LOCATION=global
+make config
+# Select: Google Cloud Login (Vertex AI ADC)
+make connect
 ```
+
+This runs `gcloud auth application-default login` on the host and mounts the
+generated credential into the Excalibur container.
 
 ## Usage
 

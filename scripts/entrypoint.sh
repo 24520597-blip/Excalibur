@@ -114,6 +114,11 @@ case "$AUTH_MODE" in
         if [ -n "$GEMINI_API_KEY" ]; then
             echo -e "${GREEN}Using Gemini API key${NC}"
         elif [ "${GEMINI_API_MODE:-developer}" = "vertex" ] && [ -n "$GOOGLE_CLOUD_PROJECT" ]; then
+            if [ ! -r "${GOOGLE_APPLICATION_CREDENTIALS:-/home/pentester/.config/gcloud/application_default_credentials.json}" ]; then
+                echo -e "${YELLOW}Error: Google Cloud ADC credentials are not readable in the container${NC}"
+                echo "Run 'make config' and select Google Cloud Login (Vertex AI ADC)"
+                exit 1
+            fi
             echo -e "${GREEN}Using Vertex AI with Application Default Credentials${NC}"
             echo -e "${BLUE}Project: ${GOOGLE_CLOUD_PROJECT}${NC}"
         else

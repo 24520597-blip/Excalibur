@@ -12,6 +12,8 @@ services:
       - claude-config:/home/pentester/.claude
       # Persist CCR configuration
       - ccr-config:/home/pentester/.claude-code-router
+      # Share Google Cloud Application Default Credentials from the host
+      - ${HOME}/.config/gcloud:/home/pentester/.config/gcloud:ro
     stdin_open: true
     tty: true
     # Required for OpenVPN (HackTheBox/TryHackMe connectivity)
@@ -44,6 +46,7 @@ services:
       - GEMINI_API_MODE=${GEMINI_API_MODE:-developer}
       - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-}
       - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
       # API keys (set based on auth mode via .env.auth)
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
