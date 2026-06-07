@@ -75,6 +75,25 @@ For more information: https://github.com/yourusername/excalibur
     )
 
     parser.add_argument(
+        "--gemini-api-mode",
+        choices=["developer", "vertex"],
+        default=None,
+        help="Use Gemini Developer API or Google Cloud Vertex AI",
+    )
+
+    parser.add_argument(
+        "--google-cloud-project",
+        type=str,
+        help="Google Cloud project ID for Vertex AI ADC authentication",
+    )
+
+    parser.add_argument(
+        "--google-cloud-location",
+        type=str,
+        help="Google Cloud location for Vertex AI (default: global)",
+    )
+
+    parser.add_argument(
         "-n",
         "--non-interactive",
         action="store_true",
@@ -205,6 +224,9 @@ async def run_cli_mode(args: argparse.Namespace) -> None:
                 model=args.model,
                 provider=args.provider,
                 api_key=args.api_key,
+                gemini_api_mode=args.gemini_api_mode,
+                google_cloud_project=args.google_cloud_project,
+                google_cloud_location=args.google_cloud_location,
                 debug=args.debug,
                 resume_session=resume_session if attempt == 1 else None,
             )
@@ -370,6 +392,12 @@ async def run_raw_mode(args: argparse.Namespace) -> None:
         config_kwargs["llm_provider"] = args.provider
     if args.api_key:
         config_kwargs["llm_api_key"] = args.api_key
+    if args.gemini_api_mode:
+        config_kwargs["gemini_api_mode"] = args.gemini_api_mode
+    if args.google_cloud_project:
+        config_kwargs["google_cloud_project"] = args.google_cloud_project
+    if args.google_cloud_location:
+        config_kwargs["google_cloud_location"] = args.google_cloud_location
 
     config = load_config(**config_kwargs)
 
@@ -428,6 +456,9 @@ async def run_tui_mode(args: argparse.Namespace) -> None:
         model=args.model,
         provider=args.provider,
         api_key=args.api_key,
+        gemini_api_mode=args.gemini_api_mode,
+        google_cloud_project=args.google_cloud_project,
+        google_cloud_location=args.google_cloud_location,
         debug=args.debug,
         resume_session=resume_session,
     )

@@ -96,6 +96,9 @@ class ExcaliburApp(App[None]):
         model: str | None = None,
         provider: str | None = None,
         api_key: str | None = None,
+        gemini_api_mode: str | None = None,
+        google_cloud_project: str | None = None,
+        google_cloud_location: str | None = None,
         debug: bool = False,
         resume_session: str | None = None,
     ) -> None:
@@ -106,6 +109,9 @@ class ExcaliburApp(App[None]):
         self.model = model
         self.provider = provider
         self.api_key = api_key
+        self.gemini_api_mode = gemini_api_mode
+        self.google_cloud_project = google_cloud_project
+        self.google_cloud_location = google_cloud_location
         self._debug = debug
         self.resume_session = resume_session
 
@@ -389,6 +395,12 @@ class ExcaliburApp(App[None]):
                     config_kwargs["llm_provider"] = self.provider
                 if self.api_key:
                     config_kwargs["llm_api_key"] = self.api_key
+                if self.gemini_api_mode:
+                    config_kwargs["gemini_api_mode"] = self.gemini_api_mode
+                if self.google_cloud_project:
+                    config_kwargs["google_cloud_project"] = self.google_cloud_project
+                if self.google_cloud_location:
+                    config_kwargs["google_cloud_location"] = self.google_cloud_location
 
                 config = load_config(**config_kwargs)
 
@@ -503,6 +515,9 @@ async def run_tui(
     model: str | None = None,
     provider: str | None = None,
     api_key: str | None = None,
+    gemini_api_mode: str | None = None,
+    google_cloud_project: str | None = None,
+    google_cloud_location: str | None = None,
     debug: bool = False,
     resume_session: str | None = None,
 ) -> None:
@@ -514,6 +529,9 @@ async def run_tui(
         model: Optional model override
         provider: Optional backend provider
         api_key: Optional provider API key
+        gemini_api_mode: Gemini Developer API or Vertex AI
+        google_cloud_project: Optional project for Vertex AI ADC authentication
+        google_cloud_location: Optional Vertex AI location
         debug: Enable debug mode
         resume_session: Optional session ID to resume
     """
@@ -523,6 +541,9 @@ async def run_tui(
         model=model,
         provider=provider,
         api_key=api_key,
+        gemini_api_mode=gemini_api_mode,
+        google_cloud_project=google_cloud_project,
+        google_cloud_location=google_cloud_location,
         debug=debug,
         resume_session=resume_session,
     )

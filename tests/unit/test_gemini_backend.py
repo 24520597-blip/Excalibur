@@ -23,6 +23,16 @@ class _FakeChat:
         return _FakeResponse()
 
 
+class _FakeChats:
+    def create(self, **kwargs: Any) -> _FakeChat:
+        return _FakeChat()
+
+
+class _FakeClient:
+    def __init__(self) -> None:
+        self.aio = type("Aio", (), {"chats": _FakeChats()})()
+
+
 @pytest.mark.unit
 class TestGeminiBackend:
     """Gemini backend behavior without making network requests."""
@@ -61,6 +71,59 @@ class TestGeminiBackend:
 
         with pytest.raises(RuntimeError, match="Gemini API key"):
             await backend.connect()
+
+    async def test_vertex_mode_uses_vertex_api_key(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from google import genai
+
+        seen: dict[str, Any] = {}
+
+        def fake_client(**kwargs: Any) -> _FakeClient:
+            seen.update(kwargs)
+            return _FakeClient()
+
+        monkeypatch.setattr(genai, "Client", fake_client)
+        backend = GeminiBackend(
+            str(tmp_path),
+            "system",
+            api_key="cloud-key",
+            api_mode="vertex",
+        )
+
+        await backend.connect()
+
+        assert seen == {"vertexai": True, "api_key": "cloud-key"}
+
+    async def test_vertex_mode_supports_adc(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from google import genai
+
+        seen: dict[str, Any] = {}
+
+        def fake_client(**kwargs: Any) -> _FakeClient:
+            seen.update(kwargs)
+            return _FakeClient()
+
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+        monkeypatch.setattr(genai, "Client", fake_client)
+        backend = GeminiBackend(
+            str(tmp_path),
+            "system",
+            api_mode="vertex",
+            google_cloud_project="project-id",
+            google_cloud_location="us-central1",
+        )
+
+        await backend.connect()
+
+        assert seen == {
+            "vertexai": True,
+            "project": "project-id",
+            "location": "us-central1",
+        }
 
     def test_function_tool_can_be_deep_copied(self) -> None:
         """Gemini SDK deep-copies tools before every request."""

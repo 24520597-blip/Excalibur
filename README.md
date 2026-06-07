@@ -23,6 +23,18 @@ make connect          # Connect to container
 Select `Gemini API Key` in `make config` to save the key and configure the
 container to use Gemini automatically.
 
+For a Vertex AI Express Mode key, select `Vertex AI Express Mode API Key`.
+A standard Google Cloud project API key is not accepted by standard Vertex AI.
+Standard Vertex AI uses Application Default Credentials:
+
+```bash
+gcloud auth application-default login
+export LLM_PROVIDER=gemini
+export GEMINI_API_MODE=vertex
+export GOOGLE_CLOUD_PROJECT=your-project-id
+export GOOGLE_CLOUD_LOCATION=global
+```
+
 ## Usage
 
 Inside the container:

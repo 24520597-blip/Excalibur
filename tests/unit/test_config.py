@@ -34,6 +34,7 @@ class TestExcaliburConfig:
         )
         assert config.llm_model == "claude-sonnet-4-5-20250929"
         assert config.llm_provider == "claude"
+        assert config.gemini_api_mode == "developer"
         assert config.llm_api_key is None
         assert config.llm_api_base is None
         assert config.max_iterations == 300

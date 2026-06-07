@@ -111,12 +111,16 @@ case "$AUTH_MODE" in
         fi
         ;;
     gemini)
-        if [ -z "$GEMINI_API_KEY" ]; then
+        if [ -n "$GEMINI_API_KEY" ]; then
+            echo -e "${GREEN}Using Gemini API key${NC}"
+        elif [ "${GEMINI_API_MODE:-developer}" = "vertex" ] && [ -n "$GOOGLE_CLOUD_PROJECT" ]; then
+            echo -e "${GREEN}Using Vertex AI with Application Default Credentials${NC}"
+            echo -e "${BLUE}Project: ${GOOGLE_CLOUD_PROJECT}${NC}"
+        else
             echo -e "${YELLOW}Error: GEMINI_API_KEY not set${NC}"
-            echo "Please run 'make config' and select Gemini API Key"
+            echo "Set a Gemini/Vertex Express key, or configure Vertex AI ADC and GOOGLE_CLOUD_PROJECT"
             exit 1
         fi
-        echo -e "${GREEN}Using Gemini API directly${NC}"
         echo -e "${BLUE}Model: ${LLM_MODEL:-gemini-2.5-flash}${NC}"
         ;;
     manual)

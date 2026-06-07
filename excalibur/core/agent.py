@@ -265,6 +265,9 @@ async def run_pentest(
     model: str | None = None,
     provider: str | None = None,
     api_key: str | None = None,
+    gemini_api_mode: str | None = None,
+    google_cloud_project: str | None = None,
+    google_cloud_location: str | None = None,
     working_dir: str | None = None,
     debug: bool = False,
     resume_session: str | None = None,
@@ -280,6 +283,9 @@ async def run_pentest(
         model: Optional model override
         provider: Optional backend provider (claude or gemini)
         api_key: Optional provider API key
+        gemini_api_mode: Gemini Developer API or Vertex AI
+        google_cloud_project: Optional project for Vertex AI ADC authentication
+        google_cloud_location: Optional Vertex AI location
         working_dir: Optional working directory override
         debug: Enable debug mode with verbose console output
         resume_session: Optional session ID to resume
@@ -314,6 +320,12 @@ async def run_pentest(
         config_kwargs["llm_provider"] = provider
     if api_key:
         config_kwargs["llm_api_key"] = api_key
+    if gemini_api_mode:
+        config_kwargs["gemini_api_mode"] = gemini_api_mode
+    if google_cloud_project:
+        config_kwargs["google_cloud_project"] = google_cloud_project
+    if google_cloud_location:
+        config_kwargs["google_cloud_location"] = google_cloud_location
     if working_dir:
         config_kwargs["working_directory"] = Path(working_dir)
 

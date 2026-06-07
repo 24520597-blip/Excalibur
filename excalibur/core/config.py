@@ -37,6 +37,18 @@ class ExcaliburConfig(BaseSettings):
         le=3600,
         description="Maximum seconds for a Gemini shell tool call",
     )
+    gemini_api_mode: Literal["developer", "vertex"] = Field(
+        default="developer",
+        description="Gemini Developer API or Vertex AI endpoint",
+    )
+    google_cloud_project: str | None = Field(
+        default=None,
+        description="Google Cloud project for Vertex AI ADC authentication",
+    )
+    google_cloud_location: str = Field(
+        default="global",
+        description="Google Cloud location for Vertex AI",
+    )
 
     # Agent Configuration
     max_iterations: int = Field(default=300, description="Maximum iterations for the agent")

@@ -262,6 +262,9 @@ class AgentController:
                     **backend_args,
                     api_key=self.config.llm_api_key,
                     tool_timeout=self.config.gemini_tool_timeout,
+                    api_mode=self.config.gemini_api_mode,
+                    google_cloud_project=self.config.google_cloud_project,
+                    google_cloud_location=self.config.google_cloud_location,
                 )
             else:
                 self.backend = ClaudeCodeBackend(**backend_args)

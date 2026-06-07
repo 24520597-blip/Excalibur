@@ -288,12 +288,18 @@ class GeminiBackend(AgentBackend):
         model: str = "gemini-2.5-flash",
         api_key: str | None = None,
         tool_timeout: int = 300,
+        api_mode: str = "developer",
+        google_cloud_project: str | None = None,
+        google_cloud_location: str = "global",
     ) -> None:
         self._cwd = Path(working_directory)
         self._system_prompt = system_prompt
         self._model = model
         self._api_key = api_key
         self._tool_timeout = tool_timeout
+        self._api_mode = api_mode
+        self._google_cloud_project = google_cloud_project
+        self._google_cloud_location = google_cloud_location
         self._client: Any = None
         self._chat: Any = None
         self._pending_messages: list[AgentMessage] = []
@@ -305,12 +311,32 @@ class GeminiBackend(AgentBackend):
         from google import genai
         from google.genai import types
 
-        api_key = self._api_key or os.environ.get("GEMINI_API_KEY")
-        if not api_key:
-            raise RuntimeError("Gemini API key not found. Set GEMINI_API_KEY or LLM_API_KEY.")
-
         self._cwd.mkdir(parents=True, exist_ok=True)
-        self._client = genai.Client(api_key=api_key)
+        api_key = (
+            self._api_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        )
+        if self._api_mode == "vertex":
+            if api_key:
+                self._client = genai.Client(vertexai=True, api_key=api_key)
+            else:
+                project = self._google_cloud_project or os.environ.get("GOOGLE_CLOUD_PROJECT")
+                location = (
+                    self._google_cloud_location
+                    or os.environ.get("GOOGLE_CLOUD_LOCATION")
+                    or "global"
+                )
+                if not project:
+                    raise RuntimeError(
+                        "Vertex AI requires a Google Cloud API key or GOOGLE_CLOUD_PROJECT "
+                        "with Application Default Credentials."
+                    )
+                self._client = genai.Client(vertexai=True, project=project, location=location)
+        else:
+            if not api_key:
+                raise RuntimeError(
+                    "Gemini API key not found. Set GEMINI_API_KEY or GOOGLE_API_KEY."
+                )
+            self._client = genai.Client(api_key=api_key)
         self._chat = self._client.aio.chats.create(
             model=self._model,
             config=types.GenerateContentConfig(

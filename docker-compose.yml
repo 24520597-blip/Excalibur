@@ -41,6 +41,9 @@ services:
       - EXCALIBUR_AUTH_MODE=${EXCALIBUR_AUTH_MODE:-manual}
       - LLM_PROVIDER=${LLM_PROVIDER:-claude}
       - LLM_MODEL=${LLM_MODEL:-claude-sonnet-4-5-20250929}
+      - GEMINI_API_MODE=${GEMINI_API_MODE:-developer}
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-}
+      - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-global}
       # API keys (set based on auth mode via .env.auth)
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
