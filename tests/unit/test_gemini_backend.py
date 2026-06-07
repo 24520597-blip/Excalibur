@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import sys
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, ClassVar
 
 import pytest
 
-from excalibur.core.backend import GeminiBackend, MessageType
+from excalibur.core.backend import GeminiBackend, MessageType, _gemini_shell_tool
 
 
 class _FakeResponse:
@@ -60,6 +61,14 @@ class TestGeminiBackend:
 
         with pytest.raises(RuntimeError, match="Gemini API key"):
             await backend.connect()
+
+    def test_function_tool_can_be_deep_copied(self) -> None:
+        """Gemini SDK deep-copies tools before every request."""
+        from google.genai import types
+
+        config = types.GenerateContentConfig(tools=[_gemini_shell_tool])
+        copied = deepcopy(config)
+        assert copied.tools
 
     def test_shell_timeout_is_bounded(self, tmp_path: Path) -> None:
         backend = GeminiBackend(str(tmp_path), "system", api_key="test", tool_timeout=7)
