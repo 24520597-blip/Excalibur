@@ -33,7 +33,7 @@ class ExcaliburConfig(BaseSettings):
     max_iterations: int = Field(default=300, description="Maximum iterations for the agent")
 
     working_directory: Path = Field(
-        default_factory=lambda: Path.cwd() / "workspace",
+        default_factory=lambda: Path.cwd() / "workspace" if Path.cwd().name != "workspace" else Path.cwd(),
         description="Working directory for agent operations",
     )
 

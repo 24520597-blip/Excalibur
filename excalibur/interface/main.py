@@ -310,10 +310,25 @@ async def run_raw_mode(args: argparse.Namespace) -> None:
         else:
             print(f"[STATE] {state}", flush=True)
 
+    def on_tdi(event: Event) -> None:
+        node_id = event.data.get("node_id")
+        tdi_val = event.data.get("tdi_value")
+        if tdi_val is not None:
+            print(f"[TDA_SCORE] Node: {node_id} | TDI: {tdi_val:.4f}", flush=True)
+
+    def on_backprop(event: Event) -> None:
+        node_id = event.data.get("node_id")
+        outcome = event.data.get("outcome")
+        promise = event.data.get("promise")
+        if promise is not None:
+            print(f"[BACKPROP] Node: {node_id} | Outcome: {outcome} | Promise: {promise:.4f}", flush=True)
+
     events.subscribe(EventType.MESSAGE, on_message)
     events.subscribe(EventType.TOOL, on_tool)
     events.subscribe(EventType.FLAG_FOUND, on_flag)
     events.subscribe(EventType.STATE_CHANGED, on_state)
+    events.subscribe(EventType.TDI_COMPUTED, on_tdi)
+    events.subscribe(EventType.TREE_BACKPROPAGATE, on_backprop)
 
     # Determine session to resume
     resume_session = args.session_id
