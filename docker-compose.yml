@@ -37,8 +37,10 @@ services:
       - TERM=xterm-256color
       # Python settings
       - PYTHONUNBUFFERED=1
-      # Auth mode: "openrouter", "anthropic", or "manual"
+      # Auth mode: "openrouter", "anthropic", "gemini", "local", or "manual"
       - EXCALIBUR_AUTH_MODE=${EXCALIBUR_AUTH_MODE:-manual}
+      - LLM_PROVIDER=${LLM_PROVIDER:-claude}
+      - LLM_MODEL=${LLM_MODEL:-claude-sonnet-4-5-20250929}
       # API keys (set based on auth mode via .env.auth)
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}

@@ -20,6 +20,9 @@ make config           # Configure authentication (first time)
 make connect          # Connect to container
 ```
 
+Select `Gemini API Key` in `make config` to save the key and configure the
+container to use Gemini automatically.
+
 ## Usage
 
 Inside the container:

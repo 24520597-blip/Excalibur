@@ -110,6 +110,15 @@ case "$AUTH_MODE" in
             echo -e "${GREEN}Using Anthropic API key${NC}"
         fi
         ;;
+    gemini)
+        if [ -z "$GEMINI_API_KEY" ]; then
+            echo -e "${YELLOW}Error: GEMINI_API_KEY not set${NC}"
+            echo "Please run 'make config' and select Gemini API Key"
+            exit 1
+        fi
+        echo -e "${GREEN}Using Gemini API directly${NC}"
+        echo -e "${BLUE}Model: ${LLM_MODEL:-gemini-2.5-flash}${NC}"
+        ;;
     manual)
         echo -e "${YELLOW}Manual login mode${NC}"
         echo -e "Run ${GREEN}claude login${NC} to authenticate"
