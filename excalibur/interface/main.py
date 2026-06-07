@@ -32,6 +32,9 @@ Examples:
   # Custom model
   excalibur --target 10.10.11.50 --model claude-opus-4-20250514
 
+  # Gemini API
+  excalibur --target 10.10.11.50 --provider gemini --model gemini-2.5-flash
+
 For more information: https://github.com/yourusername/excalibur
         """,
     )
@@ -55,7 +58,20 @@ For more information: https://github.com/yourusername/excalibur
         "-m",
         "--model",
         type=str,
-        help="Claude model to use (default: claude-sonnet-4-5-20250929)",
+        help="Provider model to use",
+    )
+
+    parser.add_argument(
+        "--provider",
+        choices=["claude", "gemini"],
+        default=None,
+        help="LLM backend provider (default: claude)",
+    )
+
+    parser.add_argument(
+        "--api-key",
+        type=str,
+        help="Provider API key (prefer GEMINI_API_KEY or LLM_API_KEY environment variables)",
     )
 
     parser.add_argument(
@@ -187,6 +203,8 @@ async def run_cli_mode(args: argparse.Namespace) -> None:
                 target=args.target,
                 custom_instruction=custom_instruction,
                 model=args.model,
+                provider=args.provider,
+                api_key=args.api_key,
                 debug=args.debug,
                 resume_session=resume_session if attempt == 1 else None,
             )
@@ -321,7 +339,10 @@ async def run_raw_mode(args: argparse.Namespace) -> None:
         outcome = event.data.get("outcome")
         promise = event.data.get("promise")
         if promise is not None:
-            print(f"[BACKPROP] Node: {node_id} | Outcome: {outcome} | Promise: {promise:.4f}", flush=True)
+            print(
+                f"[BACKPROP] Node: {node_id} | Outcome: {outcome} | Promise: {promise:.4f}",
+                flush=True,
+            )
 
     events.subscribe(EventType.MESSAGE, on_message)
     events.subscribe(EventType.TOOL, on_tool)
@@ -345,6 +366,10 @@ async def run_raw_mode(args: argparse.Namespace) -> None:
         config_kwargs["custom_instruction"] = args.instruction
     if args.model:
         config_kwargs["llm_model"] = args.model
+    if args.provider:
+        config_kwargs["llm_provider"] = args.provider
+    if args.api_key:
+        config_kwargs["llm_api_key"] = args.api_key
 
     config = load_config(**config_kwargs)
 
@@ -401,6 +426,8 @@ async def run_tui_mode(args: argparse.Namespace) -> None:
         target=args.target,
         custom_instruction=args.instruction,
         model=args.model,
+        provider=args.provider,
+        api_key=args.api_key,
         debug=args.debug,
         resume_session=resume_session,
     )

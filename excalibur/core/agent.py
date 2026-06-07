@@ -263,6 +263,8 @@ async def run_pentest(
     target: str,
     custom_instruction: str | None = None,
     model: str | None = None,
+    provider: str | None = None,
+    api_key: str | None = None,
     working_dir: str | None = None,
     debug: bool = False,
     resume_session: str | None = None,
@@ -276,6 +278,8 @@ async def run_pentest(
         target: Target challenge/machine to solve
         custom_instruction: Optional custom challenge context or instructions
         model: Optional model override
+        provider: Optional backend provider (claude or gemini)
+        api_key: Optional provider API key
         working_dir: Optional working directory override
         debug: Enable debug mode with verbose console output
         resume_session: Optional session ID to resume
@@ -306,6 +310,10 @@ async def run_pentest(
         config_kwargs["custom_instruction"] = custom_instruction
     if model:
         config_kwargs["llm_model"] = model
+    if provider:
+        config_kwargs["llm_provider"] = provider
+    if api_key:
+        config_kwargs["llm_api_key"] = api_key
     if working_dir:
         config_kwargs["working_directory"] = Path(working_dir)
 

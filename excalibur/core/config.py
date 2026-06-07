@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,9 +18,12 @@ class ExcaliburConfig(BaseSettings):
     )
 
     # LLM Configuration
-    # Note: API key is optional - Claude Code manages its own configuration
+    llm_provider: Literal["claude", "gemini"] = Field(
+        default="claude", description="LLM backend provider"
+    )
+
     llm_model: str = Field(
-        default="claude-sonnet-4-5-20250929", description="Claude model to use for the agent"
+        default="claude-sonnet-4-5-20250929", description="Provider model to use for the agent"
     )
 
     llm_api_key: str | None = Field(
@@ -28,12 +31,20 @@ class ExcaliburConfig(BaseSettings):
     )
 
     llm_api_base: str | None = Field(default=None, description="Optional custom API base URL")
+    gemini_tool_timeout: int = Field(
+        default=300,
+        ge=1,
+        le=3600,
+        description="Maximum seconds for a Gemini shell tool call",
+    )
 
     # Agent Configuration
     max_iterations: int = Field(default=300, description="Maximum iterations for the agent")
 
     working_directory: Path = Field(
-        default_factory=lambda: Path.cwd() / "workspace" if Path.cwd().name != "workspace" else Path.cwd(),
+        default_factory=lambda: Path.cwd() / "workspace"
+        if Path.cwd().name != "workspace"
+        else Path.cwd(),
         description="Working directory for agent operations",
     )
 
@@ -115,6 +126,13 @@ class ExcaliburConfig(BaseSettings):
             # This is fine if the directory is already available
             if not self.working_directory.exists():
                 raise
+
+    @model_validator(mode="after")
+    def select_provider_default_model(self) -> "ExcaliburConfig":
+        """Use a compatible default model when Gemini is selected."""
+        if self.llm_provider == "gemini" and self.llm_model == "claude-sonnet-4-5-20250929":
+            self.llm_model = "gemini-2.5-flash"
+        return self
 
     @property
     def system_prompt_path(self) -> Path:

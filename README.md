@@ -8,6 +8,7 @@ AI-powered autonomous penetration testing agent with evidence-guided attack tree
 - **LLM Provider** (one of):
   - Claude subscription (OAuth login)
   - Anthropic API key
+  - Gemini API key
   - OpenRouter API key
   - Local LLM (LM Studio, Ollama, etc.)
 
@@ -32,7 +33,13 @@ excalibur --target 10.10.11.100 --non-interactive
 
 # With context hint
 excalibur --target 10.10.11.50 --instruction "WordPress site, check plugin vulns"
+
+# Use Gemini API directly
+GEMINI_API_KEY="your-key" excalibur --target 10.10.11.50 --provider gemini
 ```
+
+The Gemini backend uses Google's official `google-genai` SDK and exposes a
+workspace-scoped shell function tool so the model can execute pentesting commands.
 
 **Keyboard shortcuts:** `F1` Help | `Ctrl+P` Pause/Resume | `Ctrl+Q` Quit
 

@@ -4,6 +4,7 @@ Each module defines Skill instances that compose multiple tools into
 reusable penetration testing workflows.
 """
 
+from excalibur.tools.skill import Skill
 from excalibur.tools.skills.ad_skills import get_ad_skills
 from excalibur.tools.skills.pivot_skills import get_pivot_skills
 from excalibur.tools.skills.privesc_skills import get_privesc_skills
@@ -19,9 +20,9 @@ __all__ = [
 ]
 
 
-def get_all_skills() -> list:
+def get_all_skills() -> list[Skill]:
     """Return every built-in skill from all categories."""
-    skills: list = []
+    skills: list[Skill] = []
     skills.extend(get_recon_skills())
     skills.extend(get_web_skills())
     skills.extend(get_privesc_skills())

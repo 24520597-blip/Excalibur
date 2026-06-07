@@ -99,7 +99,7 @@ class ContextCompressor:
         # Summarise every top-level branch that is NOT on the active path
         root_id = getattr(tree, "root_id", None)
         root_node = nodes.get(root_id) if root_id else None
-        children = getattr(root_node, "children", []) if root_node else []
+        children = getattr(root_node, "children_ids", []) if root_node else []
 
         for child_id in children:
             if child_id not in active_path_ids:
@@ -158,7 +158,7 @@ class ContextCompressor:
             return path
 
         nodes = getattr(tree, "nodes", {})
-        current = active_id
+        current: str | None = active_id
         visited: set[str] = set()
         while current and current not in visited:
             visited.add(current)

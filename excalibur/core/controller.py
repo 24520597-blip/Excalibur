@@ -12,6 +12,7 @@ from excalibur.core.backend import (
     AgentBackend,
     AgentMessage,
     ClaudeCodeBackend,
+    GeminiBackend,
     MessageType,
 )
 from excalibur.core.config import ExcaliburConfig
@@ -204,6 +205,7 @@ class AgentController:
             if self._pending_instruction:
                 self.sessions.add_instruction(self._pending_instruction)
                 self.events.emit_message(f"Injecting: {self._pending_instruction[:50]}...", "info")
+                assert self.backend is not None
                 await self.backend.query(self._pending_instruction)
                 self._pending_instruction = None
 
@@ -250,11 +252,20 @@ class AgentController:
         if self.backend is None:
             from excalibur.prompts.pentesting import get_ctf_prompt
 
-            self.backend = ClaudeCodeBackend(
-                working_directory=str(self.config.working_directory),
-                system_prompt=get_ctf_prompt(self.config.custom_instruction),
-                model=self.config.llm_model,
-            )
+            backend_args = {
+                "working_directory": str(self.config.working_directory),
+                "system_prompt": get_ctf_prompt(self.config.custom_instruction),
+                "model": self.config.llm_model,
+            }
+            if self.config.llm_provider == "gemini":
+                self.backend = GeminiBackend(
+                    **backend_args,
+                    api_key=self.config.llm_api_key,
+                    tool_timeout=self.config.gemini_tool_timeout,
+                )
+            else:
+                self.backend = ClaudeCodeBackend(**backend_args)
+        assert self.backend is not None
 
         try:
             self._set_state(
@@ -329,6 +340,7 @@ class AgentController:
         output_parts: list[str] = []
         flags_found: list[str] = []
         tree = self._attack_tree
+        assert self.backend is not None
         budget = self.config.max_budget
 
         # Send initial query
@@ -358,6 +370,7 @@ class AgentController:
                 break
 
             current_node.status = NodeStatus.ACTIVE
+            tree.active_node_id = current_node.id
             self.events.emit(
                 Event(
                     EventType.TREE_NODE_SELECTED,
@@ -404,6 +417,7 @@ class AgentController:
                 return {"output_parts": output_parts, "flags_found": flags_found}
 
             # 6. Query backend
+            flags_before_iteration = set(flags_found)
             await self.backend.query(query)
 
             # 7. Process response and collect findings
@@ -429,7 +443,7 @@ class AgentController:
                 current_node.findings.extend(iteration_findings[:3])
 
             # 9. Backpropagate
-            outcome = self._assess_outcome(iteration_findings, flags_found)
+            outcome = self._assess_outcome(iteration_findings, flags_before_iteration)
             self._planner.backpropagate(tree, current_node, outcome)
             self.events.emit(
                 Event(
@@ -445,6 +459,7 @@ class AgentController:
             # 10. Expand tree with child nodes for new findings
             new_findings = self._extract_findings(iteration_findings)
             if new_findings:
+                self._record_findings(current_node, new_findings)
                 new_nodes = self._planner.expand_tree(tree, current_node, new_findings)
                 if new_nodes:
                     self.events.emit(
@@ -551,12 +566,12 @@ class AgentController:
 
         return "\n".join(parts)
 
-    def _assess_outcome(self, findings: list[str], flags_found: list[str]) -> Any:
+    def _assess_outcome(self, findings: list[str], flags_before_iteration: set[str]) -> Any:
         """Assess the outcome of an EGATS iteration.
 
         Args:
             findings: Text findings from the iteration.
-            flags_found: List of flags found so far.
+            flags_before_iteration: Flags known before this iteration.
 
         Returns:
             ActionOutcome value.
@@ -566,7 +581,7 @@ class AgentController:
         # Check if new flags were found in this iteration
         combined = " ".join(findings)
         new_flags = self._detect_flags(combined)
-        if any(f not in flags_found for f in new_flags):
+        if any(f not in flags_before_iteration for f in new_flags):
             return ActionOutcome.SUCCESS
 
         # Check for meaningful progress indicators
@@ -652,6 +667,75 @@ class AgentController:
 
         return findings[:10]  # Limit expansion
 
+    def _record_findings(self, node: Any, findings: list[dict[str, Any]]) -> None:
+        """Persist basic host, service, and vulnerability findings."""
+        if self._state_store is None:
+            return
+
+        from excalibur.memory.models import HostEntity, ServiceEntity, VulnerabilityEntity
+
+        default_host = node.host or self.config.target
+        for finding in findings:
+            description = str(finding.get("description", ""))
+            host = str(finding.get("host") or default_host)
+            host_entity = self._state_store.get_host_by_ip(host)
+            if host_entity is None:
+                host_entity = HostEntity(
+                    ip_address=host,
+                    discovery_node_id=node.id,
+                )
+                self._state_store.add_host(host_entity)
+                self.events.emit(
+                    Event(
+                        EventType.ENTITY_DISCOVERED,
+                        {"entity_type": "host", "entity_id": host_entity.id, "value": host},
+                    )
+                )
+
+            port_match = re.search(r"Open port (\d+)/(tcp|udp)", description, re.IGNORECASE)
+            if port_match:
+                port = int(port_match.group(1))
+                protocol = port_match.group(2).lower()
+                existing = self._state_store.get_services_for_host(host_entity.id)
+                if not any(s.port == port and s.protocol == protocol for s in existing):
+                    service = ServiceEntity(
+                        host_id=host_entity.id,
+                        port=port,
+                        protocol=protocol,
+                        discovery_node_id=node.id,
+                    )
+                    self._state_store.add_service(service)
+                    self.events.emit(
+                        Event(
+                            EventType.ENTITY_DISCOVERED,
+                            {
+                                "entity_type": "service",
+                                "entity_id": service.id,
+                                "value": f"{host}:{port}/{protocol}",
+                            },
+                        )
+                    )
+
+            if description.lower().startswith("potential vulnerability:"):
+                existing_vulns = self._state_store.get_vulnerabilities_for_host(host_entity.id)
+                if not any(v.description == description for v in existing_vulns):
+                    vulnerability = VulnerabilityEntity(
+                        host_id=host_entity.id,
+                        description=description,
+                        discovery_node_id=node.id,
+                    )
+                    self._state_store.add_vulnerability(vulnerability)
+                    self.events.emit(
+                        Event(
+                            EventType.ENTITY_DISCOVERED,
+                            {
+                                "entity_type": "vulnerability",
+                                "entity_id": vulnerability.id,
+                                "value": description,
+                            },
+                        )
+                    )
+
     async def _process_message(
         self,
         msg: AgentMessage,
@@ -695,6 +779,12 @@ class AgentController:
             cost = msg.metadata.get("cost_usd", 0)
             if cost > 0:
                 self.sessions.add_cost(cost)
+            session_id = msg.metadata.get("session_id")
+            if session_id:
+                self.sessions.set_backend_session_id(session_id)
+
+        elif msg.type == MessageType.ERROR:
+            self.events.emit_message(str(msg.content), "error")
 
     def _detect_flags(self, text: str) -> list[str]:
         """Detect potential flags in text."""

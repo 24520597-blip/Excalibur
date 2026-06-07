@@ -251,6 +251,11 @@ class ContextAssembler:
         Returns:
             Formatted mode guidance string.
         """
+        mode = {
+            "reconnaissance": "bfs",
+            "exploitation": "dfs",
+            "llm_decide": "hybrid",
+        }.get(mode, mode)
         header = f"## Exploration Mode: {mode.upper()} (TDI={tdi_value:.2f})"
 
         if mode == "bfs":

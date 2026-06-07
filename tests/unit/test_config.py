@@ -33,6 +33,7 @@ class TestExcaliburConfig:
             working_directory=temp_working_dir,
         )
         assert config.llm_model == "claude-sonnet-4-5-20250929"
+        assert config.llm_provider == "claude"
         assert config.llm_api_key is None
         assert config.llm_api_base is None
         assert config.max_iterations == 300
@@ -40,6 +41,15 @@ class TestExcaliburConfig:
         assert config.interface_mode == "tui"
         assert config.verbose is True
         assert config.permission_mode == "bypassPermissions"
+
+    def test_gemini_provider_selects_compatible_default_model(self, temp_working_dir: Path) -> None:
+        """Gemini provider does not retain the Claude default model."""
+        config = ExcaliburConfig(
+            target="example.com",
+            working_directory=temp_working_dir,
+            llm_provider="gemini",
+        )
+        assert config.llm_model == "gemini-2.5-flash"
 
     def test_missing_required_field(self, temp_working_dir: Path):
         """Test that missing target raises validation error."""

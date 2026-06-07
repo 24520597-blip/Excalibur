@@ -66,7 +66,7 @@ class TDIScore(BaseModel):
     weight_context: float = 0.2
     weight_success: float = 0.2
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def value(self) -> float:
         """Compute composite TDI value.
@@ -128,6 +128,7 @@ class AttackTree(BaseModel):
 
     nodes: dict[str, AttackNode] = Field(default_factory=dict)
     root_id: str = ""
+    active_node_id: str | None = None
     total_actions: int = 0
     compromised_hosts: list[str] = Field(default_factory=list)
     budget_remaining: int = 300
@@ -158,7 +159,7 @@ class AttackTree(BaseModel):
 
     def get_active_leaves(self) -> list[AttackNode]:
         """Return leaf nodes that are neither pruned nor failed."""
-        excluded = {NodeStatus.PRUNED, NodeStatus.FAILED}
+        excluded = {NodeStatus.COMPLETED, NodeStatus.PRUNED, NodeStatus.FAILED}
         return [
             node
             for node in self.nodes.values()

@@ -94,6 +94,8 @@ class ExcaliburApp(App[None]):
         target: str,
         custom_instruction: str | None = None,
         model: str | None = None,
+        provider: str | None = None,
+        api_key: str | None = None,
         debug: bool = False,
         resume_session: str | None = None,
     ) -> None:
@@ -102,6 +104,8 @@ class ExcaliburApp(App[None]):
         self.target = target
         self.custom_instruction = custom_instruction
         self.model = model
+        self.provider = provider
+        self.api_key = api_key
         self._debug = debug
         self.resume_session = resume_session
 
@@ -381,6 +385,10 @@ class ExcaliburApp(App[None]):
                     config_kwargs["custom_instruction"] = self.custom_instruction
                 if self.model:
                     config_kwargs["llm_model"] = self.model
+                if self.provider:
+                    config_kwargs["llm_provider"] = self.provider
+                if self.api_key:
+                    config_kwargs["llm_api_key"] = self.api_key
 
                 config = load_config(**config_kwargs)
 
@@ -493,6 +501,8 @@ async def run_tui(
     target: str,
     custom_instruction: str | None = None,
     model: str | None = None,
+    provider: str | None = None,
+    api_key: str | None = None,
     debug: bool = False,
     resume_session: str | None = None,
 ) -> None:
@@ -502,6 +512,8 @@ async def run_tui(
         target: Target URL/IP/domain
         custom_instruction: Optional challenge context
         model: Optional model override
+        provider: Optional backend provider
+        api_key: Optional provider API key
         debug: Enable debug mode
         resume_session: Optional session ID to resume
     """
@@ -509,6 +521,8 @@ async def run_tui(
         target=target,
         custom_instruction=custom_instruction,
         model=model,
+        provider=provider,
+        api_key=api_key,
         debug=debug,
         resume_session=resume_session,
     )
